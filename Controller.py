@@ -1,37 +1,12 @@
 from datetime import datetime
 from Version1.View import View
-from Version1.Model import Model, BLOCK_SIZE_IDX, PATH_IDX, IS_FAST_IDX, MIN_SIZE_IDX
+from Version1.Model import Model, BLOCK_SIZE_IDX, PATH_IDX, IS_FAST_IDX, MIN_SIZE_IDX, human_bytes
 import threading
 import time
 from tkinter import END
 
 
 UPDATE_SIZE_INTERVAL = 1  # In seconds
-
-
-def human_bytes(b):
-    """
-    Return the given bytes as a human friendly KB, MB, GB, or TB string.
-    :param b: bytes
-    :return: string of human readable unit
-    """
-    b = float(b)
-    kb = float(1024)
-    mb = float(kb ** 2)  # 1,048,576
-    gb = float(kb ** 3)  # 1,073,741,824
-    tb = float(kb ** 4)  # 1,099,511,627,776
-
-    if b < kb:
-        return '{0} {1}'.format(b, 'Bytes' if 0 == b > 1 else 'Byte')
-    elif kb <= b < mb:
-        return '{0:.2f} KB'.format(b / kb)
-    elif mb <= b < gb:
-        return '{0:.2f} MB'.format(b / mb)
-    elif gb <= b < tb:
-        return '{0:.2f} GB'.format(b / gb)
-    elif tb <= b:
-        return '{0:.2f} TB'.format(b / tb)
-
 
 class Controller:
     def __init__(self):
@@ -43,31 +18,19 @@ class Controller:
 
     def update_gui(self, results_tb, tree_size_str, time_str):
         def update_gui_thread():
-            duplicate_files_groups = self.model.get_duplicates()
+            scan_results = self.model.get_scan_results()
             # After the scan is done the report consists of 3 parts:
+
             # 1. The duplicate files groups
-            for i, group in enumerate(duplicate_files_groups):
-                results_tb.insert(END, "========= Identical files group #{}, each file size: {} bytes"
-                                  .format(i + 1, group[0]) +
-                                  " ========= \n" + "\n".join(group[1:]) + "\n\n\n")
-            if len(duplicate_files_groups) == 0:
-                results_tb.insert(END, "========= No duplicates found =========\n\n")
+            results_tb.insert(END, scan_results.duplicates)
 
             # 2. Problems that were in the scan
-            results_tb.insert(END, "========= Problems ========= \n")
-            for k in self.model.scan_exceptions:
-                results_tb.insert(END, "{} - {}\n".format(k, self.model.scan_exceptions[k]))
-            if len(self.model.scan_exceptions) == 0:
-                results_tb.insert(END, "No problems \n")
+            results_tb.insert(END, scan_results.problems)
 
             # 3. Ignored file (size is lower then set min size
-            results_tb.insert(END, "\n========= Ignored files (smaller than min size) ========= \n")
-            if len(self.model.ignored_files) > 0:
-                for path in self.model.ignored_files:
-                    results_tb.insert(END, str(path.absolute()) + "\n")
-            else:
-                results_tb.insert(END, "No ignored files \n")
+            results_tb.insert(END, scan_results.ignored_files)
 
+            # Update the time of the end of the scan
             time_str.set(time_str.get() + ", End time " + datetime.now().strftime('%H:%M:%S'))
 
         def update_total_size_thread():
