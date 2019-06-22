@@ -1,6 +1,6 @@
 # Kind-Duplicate-Finder
 This program will find duplicate files in a directory.
-I developed this program in Python in my freetime.
+I developed this program in Python in my free time.
 Tried to keep the code as clean as possible with a lot of documentations.
 The program uses Tkinter for the GUI. I also followed MVC pattern as I understood it and as I found the most right to implement 
 in order for the code to be understandable.
