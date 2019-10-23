@@ -1,4 +1,4 @@
-from Version2.Controller import Controller
+from Version1.Controller import Controller
 
 
 def main():
@@ -9,8 +9,9 @@ if __name__ == "__main__":
     main()
 
 
-# TODO
 """
+More ides:
+
 1. Add total wasted size
 2. Confirmation before exit (after/during scan)
 3. Write "In progress..." in the textbox

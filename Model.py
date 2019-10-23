@@ -3,10 +3,29 @@ import xxhash
 from pathlib import Path
 from collections import defaultdict
 
-BLOCK_SIZE_IDX = 0
-PATH_IDX = 1
-IS_FAST_IDX = 2
-MIN_SIZE_IDX = 3
+
+def human_bytes(b):
+    """
+    Return the given bytes as a human friendly KB, MB, GB, or TB string.
+    :param b: bytes
+    :return: string of human readable unit
+    """
+    b = float(b)
+    kb = float(1024)
+    mb = float(kb ** 2)  # 1,048,576
+    gb = float(kb ** 3)  # 1,073,741,824
+    tb = float(kb ** 4)  # 1,099,511,627,776
+
+    if b < kb:
+        return '{0} {1}'.format(b, 'Bytes' if 0 == b > 1 else 'Byte')
+    elif kb <= b < mb:
+        return '{0:.2f} KB'.format(b / kb)
+    elif mb <= b < gb:
+        return '{0:.2f} MB'.format(b / mb)
+    elif gb <= b < tb:
+        return '{0:.2f} GB'.format(b / gb)
+    elif tb <= b:
+        return '{0:.2f} TB'.format(b / tb)
 
 
 class Model:
@@ -27,23 +46,35 @@ class Model:
     def get_scan_results(self):
         # Start the scan
         self._start_duplicates_scan()
-        results = ScanResult()
 
         # Get the only the duplicates
+        groups_counter = 0
+        duplicates = "========= Duplicates =========\n"
         for k in self.__results:
             if type(self.__results[k]) is defaultdict:
                 for inner_k in self.__results[k]:
                     if len(self.__results[k][inner_k]) > 1:
+                        groups_counter += 1
                         file_size_in_group = os.path.getsize(self.__results[k][inner_k][0])
-                        results.add_list(files_list=list(self.__results[k][inner_k]), size=file_size_in_group)
+                        duplicates += "- Identical files group #{}, each file size: {} ({} bytes)" \
+                                          .format(groups_counter, human_bytes(file_size_in_group), file_size_in_group) \
+                                      + "\n\t" + "\n\t".join(list(self.__results[k][inner_k])) + "\n\n"
+        if len(duplicates) == 0:
+            duplicates += "No duplicates found\n\n"
 
+        problems = "========= Problems ========= \n"
         for k in self.__scan_exceptions:
-            results.problems.append("{} - {}\n".format(k, self.__scan_exceptions[k]))
+            problems += "{} - {}\n".format(k, self.__scan_exceptions[k])
+        if len(self.__scan_exceptions) == 0:
+            problems += "No problems \n"
 
+        ignored_files = "\n========= Ignored files (smaller than min size) ========= \n"
         for path in self.__ignored_files:
-            results.ignored_files.append(str(path.absolute()) + "\n")
+            ignored_files += str(path.absolute()) + "\n"
+        if len(self.__ignored_files) == 0:
+            ignored_files += "No ignored files\n"
 
-        return results
+        return ScanResultsAsString(duplicates=duplicates, problems=problems, ignored_files=ignored_files)
 
     def get_hash(self, file_path):
         self.hasher.reset()
@@ -125,11 +156,8 @@ class Model:
         self.done_size_calc = True
 
 
-class ScanResult(object):
-    def __init__(self):
-        self.duplicates = []
-        self.problems = []
-        self.ignored_files = []
-
-    def add_list(self, files_list, size):
-        self.duplicates.append((files_list, size))
+class ScanResultsAsString(object):
+    def __init__(self, duplicates, problems, ignored_files):
+        self.duplicates = duplicates
+        self.problems = problems
+        self.ignored_files = ignored_files

@@ -1,36 +1,12 @@
 from tkinter import filedialog
 from tkinter import *
 from datetime import datetime
-import tkinter.ttk as ttk
+
 
 # Constants of the program
 MIN_SCREEN_WIDTH = 750
 DEFAULT_BLOCK_SIZE = 2 ** 10
 BORDER_WIDTH_SETTINGS_FRAME = 11
-
-
-def human_bytes(b):
-    """
-    Return the given bytes as a human friendly KB, MB, GB, or TB string.
-    :param b: bytes
-    :return: string of human readable unit
-    """
-    b = float(b)
-    kb = float(1024)
-    mb = float(kb ** 2)  # 1,048,576
-    gb = float(kb ** 3)  # 1,073,741,824
-    tb = float(kb ** 4)  # 1,099,511,627,776
-
-    if b < kb:
-        return '{0} {1}'.format(b, 'Bytes' if 0 == b > 1 else 'Byte')
-    elif kb <= b < mb:
-        return '{0:.2f} KB'.format(b / kb)
-    elif mb <= b < gb:
-        return '{0:.2f} MB'.format(b / mb)
-    elif gb <= b < tb:
-        return '{0:.2f} GB'.format(b / gb)
-    elif tb <= b:
-        return '{0:.2f} TB'.format(b / tb)
 
 
 class View:
@@ -103,8 +79,8 @@ class View:
             start_scan_btn.pack(pady=(5, 5))
 
         self.elements_to_remove = []
-        self.tree = None
         self.controller = controller
+
         # The window of the program
         self.window = Tk()
         self.window.title("Kind Duplicate Finder")
@@ -136,48 +112,34 @@ class View:
         self.window.minsize(MIN_SCREEN_WIDTH, self.window.winfo_height())
 
     def get_scan_params(self):
-        return [self.block_size.get(), self.path.get(), self.is_fast.get(), self.min_size.get()]
+        self.ScanParams.block_size = self.block_size.get()
+        self.ScanParams.path = self.path.get()
+        self.ScanParams.is_fast = self.is_fast.get()
+        self.ScanParams.min_size = self.min_size.get()
+        return self.ScanParams
 
-    def prepare_gui(self):
-        # the string that shows the total size
+    def prepare_gui_get_ref(self):
         tree_size_str = StringVar(self.window, "")
+        time_str = StringVar(self.window, "Scan start time: " + datetime.now().strftime('%H:%M:%S'))
         self.elements_to_remove.append(Label(self.window, textvariable=tree_size_str))
         self.elements_to_remove[-1].pack(anchor=N)
 
-        # the string that shows the start and end time
-        time_str = StringVar(self.window, "Scan start time: " + datetime.now().strftime('%H:%M:%S'))
         self.elements_to_remove.append(Label(self.window, textvariable=time_str))
         self.elements_to_remove[-1].pack(anchor=N)
 
-        # the string "Results:"
         self.elements_to_remove.append(Label(self.window, text="Results:\n"))
         self.elements_to_remove[-1].pack(anchor=N)
 
-        # the tree view with the results
-        self.tree = ttk.Treeview(self.window, selectmode='browse')
-        self.tree.insert("", 0, "1", text="Group 1, each file 432423 MB")
-        self.tree.insert("1", 1, text="path/to/file")
-        self.tree.insert("1", 2, text="path/to/file2")
-        self.tree.insert("1", 3, text="path/to/file3")
-        self.tree.pack(side='left')
-        # vsb = ttk.Scrollbar(self.tree, orient="vertical", command=self.tree.yview)
-        # vsb.pack(side='right', fill='y')
+        # Configure a text box with a scroll bar
+        self.elements_to_remove.append(Scrollbar(self.window))
+        self.elements_to_remove[-1].pack(side=RIGHT, fill=Y, pady=(0, 5), anchor=N)
 
-        # self.tree.configure(yscrollcommand=vsb.set)
-        # self.elements_to_remove.append(Scrollbar(self.window))
-        # self.elements_to_remove[-1].pack(side=RIGHT, fill=Y, pady=(0, 5), anchor=N)
-        #
-        # results_tb = Text(wrap=WORD, yscrollcommand=self.elements_to_remove[-1].set, font=("consolas", 12))
-        # results_tb.pack(pady=(0, 5), fill=BOTH, expand=True)
-        # self.elements_to_remove[-1].config(command=results_tb.yview)
+        results_tb = Text(wrap=WORD, yscrollcommand=self.elements_to_remove[-1].set, font=("consolas", 12))
+        results_tb.pack(pady=(0, 5), fill=BOTH, expand=True)
+        self.elements_to_remove[-1].config(command=results_tb.yview)
 
-        self.elements_to_remove.append(self.tree)
-
-    def add_group(self, grp, size, grp_idx):
-        self.tree.insert("", grp_idx, grp_idx, text="Group #{}, each file {}".format(grp_idx, human_bytes(size)))
-        for i, path in enumerate(grp):
-            self.tree.insert(grp_idx, i, text=path)
-        self.tree.pack()
+        self.elements_to_remove.append(results_tb)
+        return results_tb, tree_size_str, time_str
 
     def reset_results_gui(self):
         for e in self.elements_to_remove:
@@ -186,3 +148,9 @@ class View:
 
     def start_view(self):
         self.window.mainloop()
+
+    class ScanParams:
+        block_size = None
+        path = None
+        is_fast = None
+        min_size = None
