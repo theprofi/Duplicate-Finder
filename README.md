@@ -11,4 +11,4 @@ This saves up calculating the hash for every file. Instead the hash value of a f
 
 I know there may be hash collisions with files of different sizes. Hence there is the option of "slow" hash function that reduces the
 chances for hash collision.
-![screenshot](https://user-images.githubusercontent.com/8938883/148283006-9af4d7c0-b268-4bc9-9492-27bd6492eed3.png)
+![screenshot](https://user-images.githubusercontent.com/8938883/148283199-f524a5ce-6bfd-466d-8cfe-f602b65b1862.png)
