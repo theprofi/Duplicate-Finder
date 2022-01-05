@@ -1,4 +1,4 @@
-# Kind-Duplicate-Finder
+# Duplicate-Finder
 This program will find duplicate files in a directory.
 I developed this program in Python in my free time.
 Tried to keep the code as clean as possible with a lot of documentations.
